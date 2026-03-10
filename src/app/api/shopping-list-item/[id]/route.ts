@@ -1,11 +1,20 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import authOptions from '@/lib/authOptions';
 
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const session = await getServerSession(authOptions);
+    const owner = session?.user?.email;
+
+    if (!owner) {
+      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    }
+
     const { id: rawId } = await params;
     const id = Number(rawId);
     const item = await prisma.shoppingListItem.findUnique({ where: { id } });
@@ -14,17 +23,26 @@ export async function DELETE(
     }
 
     // Ensure pantry location exists for this user
+    // const location = await prisma.location.upsert({
+    //   where: { name_owner: { name: 'Default Pantry', owner: item.shoppingListId.toString() } },
+    //   update: {},
+    //   create: { name: 'Default Pantry', owner: item.shoppingListId.toString() },
+    // });
+    const body = await request.json().catch(() => ({}));
+    const locationName = body.locationName || 'Default Pantry';
+    const storageName = body.storageName || 'Default Shelf';
+
     const location = await prisma.location.upsert({
-      where: { name_owner: { name: 'Default Pantry', owner: item.shoppingListId.toString() } },
+      where: { name_owner: { name: locationName, owner: owner } },
       update: {},
-      create: { name: 'Default Pantry', owner: item.shoppingListId.toString() },
+      create: { name: locationName, owner: owner },
     });
 
     // Ensure storage exists under that location
     const storage = await prisma.storage.upsert({
-      where: { name_locationId: { name: 'Default Shelf', locationId: location.id } },
+      where: { name_locationId: { name: storageName, locationId: location.id } },
       update: {},
-      create: { name: 'Default Shelf', locationId: location.id },
+      create: { name: storageName, locationId: location.id },
     });
 
     // Move item to pantry
@@ -34,7 +52,7 @@ export async function DELETE(
         quantity: item.quantity,
         unit: item.unit || '',
         type: 'Other',
-        owner: item.shoppingListId.toString(),
+        owner: owner,
         locationId: location.id,
         storageId: storage.id,
         proteinGrams: item.proteinGrams ?? null, // Transfers protein data to pantry

@@ -60,6 +60,7 @@ model Produce {
   location         Location @relation(fields: [locationId], references: [id])
   storage          Storage  @relation(fields: [storageId], references: [id])
   quantity         Float
+  proteinGrams     Float?
   unit             String
   expiration       DateTime?
   owner            String
