@@ -130,6 +130,7 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
                       <th>Quantity</th>
                       <th>Unit</th>
                       <th>Price</th>
+                      <th>Protein</th>
                       <th>Restock When</th>
                       <th>Actions</th>
                     </tr>
@@ -149,6 +150,7 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
                         <td>{item.quantity}</td>
                         <td>{item.unit || '-'}</td>
                         <td>{item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'}</td>
+                        <td>{item.proteinGrams ? `${Number(item.proteinGrams).toFixed(1)}g` : 'N/A'}</td>
                         <td>
                           <select
                             value={item.restockTrigger || 'empty'}
@@ -185,7 +187,18 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
               </Col>
             </Row>
           )}
-
+          <Row className="pt-4"> 
+            <Col className="text-center">
+              <Button
+                variant="success"
+                className="btn-submit"
+                disabled={Object.values(checkedState).every(v => !v)}
+                // onClick={handleMoveToPantry}
+              >
+                ✓ Move Checked to Pantry
+              </Button>
+            </Col>
+          </Row>
           <Row className="pt-4">
             <Col className="text-center">
               <Button
