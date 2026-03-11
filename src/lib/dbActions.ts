@@ -287,9 +287,12 @@ export async function addShoppingList(data: { name: string; owner: string }) {
     throw new Error('A list with this name already exists.');
   }
 
-  await prisma.shoppingList.create({
+  const newList = await prisma.shoppingList.create({
     data: { name, owner },
+    include: { items: true },
   });
+
+  return newList;
 }
 
 /**
@@ -332,7 +335,6 @@ export async function getBudgetByUserId(userId: number) {
  * Deletes a shopping list and its items.
  */
 export async function deleteShoppingList(id: number) {
-  // delete items first to maintain relational integrity
   await prisma.shoppingListItem.deleteMany({
     where: { shoppingListId: id },
   });
@@ -340,8 +342,6 @@ export async function deleteShoppingList(id: number) {
   await prisma.shoppingList.delete({
     where: { id },
   });
-
-  redirect('/shopping-list');
 }
 
 /**
@@ -355,8 +355,14 @@ export async function addShoppingListItem(data: {
   proteinGrams?: number;
   shoppingListId: number;
 }) {
-  const item = await prisma.shoppingListItem.create({
-    data: {
+  const item = await prisma.shoppingListItem.upsert({
+    where: {
+      shoppingListId_name: {
+        shoppingListId: data.shoppingListId,
+        name: data.name,
+      },
+    },
+    create: {
       name: data.name,
       quantity: data.quantity,
       unit: data.unit || '',
@@ -364,9 +370,15 @@ export async function addShoppingListItem(data: {
       proteinGrams: data.proteinGrams ?? null,
       shoppingListId: data.shoppingListId,
     },
+    update: {
+      quantity: { increment: data.quantity },
+    },
   });
   console.log('✅ Added item to shopping list:', item);
-  return item;
+  return {
+    ...item,
+    price: item.price != null ? Number(item.price.toString()) : null,
+  };
 }
 
 /**
@@ -399,7 +411,10 @@ export async function editShoppingListItem(
     },
   });
 
-  return updatedItem;
+  return {
+    ...updatedItem,
+    price: updatedItem.price != null ? Number(updatedItem.price.toString()) : null,
+  };
 }
 
 /**
