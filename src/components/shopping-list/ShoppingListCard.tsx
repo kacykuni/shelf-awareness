@@ -1,7 +1,7 @@
 'use client'; 
 
 import { Card, ListGroup, Button, Badge, Form } from 'react-bootstrap';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash } from 'react-bootstrap-icons';
 import { FaPencilAlt, FaCheck, FaTimes } from 'react-icons/fa';
 import ViewShoppingListModal from './ViewShoppingListModal';
@@ -29,6 +29,10 @@ const formatDate = (d?: Date | string | null) => {
 
 export default function ShoppingListCard({ shoppingList, onListDeleted }: ShoppingListCardProps) {
   const [items, setItems] = useState<Item[]>(shoppingList.items ?? []);
+
+  useEffect(() => {
+    setItems(shoppingList.items ?? []);
+  }, [shoppingList.items]);
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(shoppingList.name);
   const [tempName, setTempName] = useState(shoppingList.name);
