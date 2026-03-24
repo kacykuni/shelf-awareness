@@ -1,6 +1,6 @@
 'use server';
 
-import { Prisma } from '@prisma/client';
+import { Prisma, QuantityUnit } from '@prisma/client';
 import { hash, compare } from 'bcrypt';
 import { redirect } from 'next/navigation';
 import { prisma } from './prisma';
@@ -364,14 +364,14 @@ export async function addShoppingListItem(data: {
     },
     create: {
       name: data.name,
-      quantity: data.quantity,
-      unit: data.unit || '',
+      quantityValue: data.quantity, 
+      quantityUnit: data.unit || '',
       price: data.price ?? null,
       proteinGrams: data.proteinGrams ?? null,
       shoppingListId: data.shoppingListId,
     },
     update: {
-      quantity: { increment: data.quantity },
+      quantityValue: { increment: data.quantity },
     },
   });
   console.log('✅ Added item to shopping list:', item);

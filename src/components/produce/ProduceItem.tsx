@@ -12,8 +12,8 @@ import DeleteProduceModal from './DeleteProduceModal';
 const ProduceItem = ({
   id,
   name,
-  quantity,
-  unit,
+  quantityValue,
+  quantityUnit,
   type,
   location,
   storage,
@@ -40,8 +40,8 @@ const ProduceItem = ({
         body: JSON.stringify({
           owner,
           name,
-          quantity: Number(quantity),
-          unit: unit ?? '',
+          quantityValue: Number(quantityValue),
+          quantityUnit: quantityUnit ?? '',
         }),
       });
 
@@ -68,8 +68,8 @@ const ProduceItem = ({
           {(typeof location === 'object' ? location?.name : location) || 'N/A'}
         </td>
         <td>
-          {quantity.toString()}
-          {unit ? ` ${unit}` : ''}
+          {quantityValue?.toString()}
+          {quantityUnit ? ` ${quantityUnit}` : ''}
         </td>
         <td>{safeRestock}</td>
         <td>{expiration ? new Date(expiration).toISOString().split('T')[0] : 'N/A'}</td>
@@ -103,8 +103,8 @@ const ProduceItem = ({
         produce={{
           id,
           name,
-          quantity,
-          unit,
+          quantityValue,
+          quantityUnit,
           type,
           location,
           storage,
@@ -123,8 +123,8 @@ const ProduceItem = ({
         produce={{
           id,
           name,
-          quantity,
-          unit,
+          quantityValue,
+          quantityUnit,
           type,
           location,
           storage,

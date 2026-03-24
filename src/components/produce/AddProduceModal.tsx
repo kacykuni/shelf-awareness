@@ -27,8 +27,8 @@ type ProduceValues = {
   type: string;
   location: string;
   storage: string;
-  quantity: number;
-  unit: string;
+  quantityValue: number;
+  quantityUnit: string;
   /** HTML date input gives a string (yyyy-mm-dd) or '' -> we store string|null in the form. */
   expiration: string | null;
   owner: string;
@@ -47,8 +47,8 @@ interface AddProduceModalProps {
     type?: string;
     location?: string;
     storage?: string;
-    quantity?: number;
-    unit?: string;
+    quantityValue?: number;
+    quantityUnit?: string;
     expiration?: Date | string | null;
     owner?: string;
     image?: string | null;
@@ -83,8 +83,8 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
       type: '',
       location: '',
       storage: '',
-      quantity: undefined,
-      unit: '',
+      quantityValue: undefined,
+      quantityUnit: '',
       expiration: null,
       owner: produce?.owner ?? '',
       image: '',
@@ -182,7 +182,8 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
       // Normalize payload for your DB action.
       const payload = {
         ...data,
-        quantity: Number(data.quantity), // ensure number
+        quantity: Number(data.quantityValue), // rename
+        unit: data.quantityUnit,              // rename
         expiration: data.expiration ? new Date(data.expiration) : null,
         image: data.image.trim() === '' ? null : data.image.trim(),
         restockThreshold:
@@ -379,12 +380,12 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                   type="number"
                   step={0.5}
                   placeholder="e.g., 1, 1.5"
-                  isInvalid={!!errors.quantity}
-                  {...register('quantity', { valueAsNumber: true })}
+                  isInvalid={!!errors.quantityValue}
+                  {...register('quantityValue', { valueAsNumber: true })}
                   required
                 />
                 <Form.Control.Feedback type="invalid">
-                  {errors.quantity?.message as string}
+                  {errors.quantityValue?.message as string}
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>
@@ -394,13 +395,13 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                 <Form.Select
                   value={unitChoice}
                   required
-                  className={`${errors.unit ? 'is-invalid' : ''}`}
+                  className={`${errors.quantityUnit ? 'is-invalid' : ''}`}
                   onChange={(e) => {
                     const { value } = e.target;
                     setUnitChoice(value);
-                    setValue('unit', value === 'Other' ? '' : value);
+                    setValue('quantityUnit', value === 'Other' ? '' : value);
                   }}
-                  isInvalid={!!errors.unit}
+                  isInvalid={!!errors.quantityUnit}
                 >
                   <option value="" disabled>Select unit...</option>
                   {unitOptions.map((u) => (
@@ -412,13 +413,13 @@ export default function AddProduceModal({ show, onHide, produce }: AddProduceMod
                     type="text"
                     placeholder="Enter custom unit"
                     className="mt-2"
-                    isInvalid={!!errors.unit}
-                    {...register('unit')}
+                    isInvalid={!!errors.quantityUnit}
+                    {...register('quantityUnit')}
                     required
                   />
                 )}
                 <Form.Control.Feedback type="invalid">
-                  {errors.unit?.message as string}
+                  {errors.quantityUnit?.message as string}
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>
