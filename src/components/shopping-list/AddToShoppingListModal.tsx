@@ -9,19 +9,18 @@ import { useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { AddShoppingListItemSchema } from '@/lib/validationSchemas';
 import { addShoppingListItem } from '@/lib/dbActions';
-
+import { QuantityUnit } from '@prisma/client';
 import { ShoppingListWithProtein } from '../../types/shoppingList';
 
-// ------- types -------
-// type SL = { id: number; name: string };
 type SL = Pick<ShoppingListWithProtein, 'id' | 'name'>;
 
 type AddItemValues = {
   name: string;
   quantityValue: number;
+  quantityUnit?: QuantityUnit | null;
+  customQuantityUnit?: string;
   shoppingListId: number;
   price?: number;
-  quantityUnit?: string;
   proteinGrams?: number;
 };
 
@@ -46,43 +45,55 @@ const AddToShoppingListModal = ({
   const { data: session } = useSession();
   const owner = session?.user?.email;
 
+  const unitOptions: QuantityUnit[] = ['G', 'OZ', 'LB', 'ML', 'CUP', 'ITEM'];
+
   const {
     register,
     handleSubmit,
     reset,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<AddItemValues>({
     resolver: yupResolver(AddShoppingListItemSchema),
     defaultValues: {
       name: prefillName,
       quantityValue: 0,
-      quantityUnit: '',
+      quantityUnit: null,
+      customQuantityUnit: '',
       price: 0,
       proteinGrams: 0,
       shoppingListId: shoppingLists[0]?.id ?? 0,
     },
   });
 
+  const unitChoice = watch('quantityUnit') as QuantityUnit | "Other" | undefined;
+  const customUnit = watch('customQuantityUnit');
+
+  // Reset form when modal closes
   useEffect(() => {
-    if (!show)
+    if (!show) {
       reset({
         name: prefillName,
         quantityValue: 0,
-        quantityUnit: '',
+        quantityUnit: null,
+        customQuantityUnit: '',
         price: 0,
         proteinGrams: 0,
+        shoppingListId: shoppingLists[0]?.id ?? 0,
       });
-  }, [show, prefillName, reset]);
+    }
+  }, [show, prefillName, reset, shoppingLists]);
 
   const handleClose = () => {
-    if (!show)
-      reset({
-        name: prefillName,
-        quantityValue: 0,
-        quantityUnit: '',
-        price: 0,
-        proteinGrams: 0,
-      });
+    reset({
+      name: prefillName,
+      quantityValue: 0,
+      quantityUnit: null,
+      customQuantityUnit: '',
+      price: 0,
+      proteinGrams: 0,
+      shoppingListId: shoppingLists[0]?.id ?? 0,
+    });
     onHide();
   };
 
@@ -93,18 +104,17 @@ const AddToShoppingListModal = ({
     }
 
     try {
-      const price = typeof data.price === 'number'
-        ? data.price
-        : parseFloat(data.price || '0');
-
-      const proteinGrams = typeof data.proteinGrams === 'number'
-        ? data.proteinGrams
-        : parseFloat(data.proteinGrams || '0');
+      const unit =
+        unitChoice === 'Other'
+        ? customUnit?.trim() || undefined
+        : unitChoice || undefined;
+      const price = Number(data.price) || 0;
+      const proteinGrams = Number(data.proteinGrams) || 0;
 
       const newItem = await addShoppingListItem({
         name: data.name.trim(),
         quantity: Number(data.quantityValue),
-        unit: data.quantityUnit?.trim() || '',
+        unit,
         price,
         proteinGrams,
         shoppingListId: Number(data.shoppingListId),
@@ -121,8 +131,8 @@ const AddToShoppingListModal = ({
   };
 
   const formContent = (
-    <Form className="mobile-section" noValidate onSubmit={handleSubmit(onSubmit)}>
-      <Row className="mb-3 mobile-grid">
+    <Form noValidate onSubmit={handleSubmit(onSubmit)}>
+      <Row className="mb-3">
         <Col xs={12} sm={6}>
           <Form.Group>
             <Form.Label>Item Name</Form.Label>
@@ -138,10 +148,11 @@ const AddToShoppingListModal = ({
 
         <Col xs={6} sm={3}>
           <Form.Group>
-            <Form.Label>Qty</Form.Label>
+            <Form.Label>Quantity</Form.Label>
             <Form.Control
               type="number"
-              min={1}
+              step="0.01"
+              min="0"
               {...register('quantityValue', { valueAsNumber: true })}
               className={`${errors.quantityValue ? 'is-invalid' : ''}`}
             />
@@ -152,7 +163,24 @@ const AddToShoppingListModal = ({
         <Col xs={6} sm={3}>
           <Form.Group>
             <Form.Label>Unit</Form.Label>
-            <Form.Control type="text" {...register('quantityUnit')} />
+            <Form.Select {...register('quantityUnit')}>
+              <option value="">Select unit…</option>
+              {unitOptions.map((u) => (
+                <option key={u} value={u}>
+                  {u}
+                </option>
+              ))}
+              <option value="Other">Other</option>
+            </Form.Select>
+
+            {unitChoice === 'Other' && (
+  <Form.Control
+    type="text"
+    placeholder="Enter custom unit"
+    {...register('customQuantityUnit')}
+    className="mt-2"
+  />
+)}
           </Form.Group>
         </Col>
       </Row>
@@ -193,10 +221,7 @@ const AddToShoppingListModal = ({
         <Col xs={12} sm={7}>
           <Form.Group>
             <Form.Label>List</Form.Label>
-            <Form.Select
-              {...register('shoppingListId', { valueAsNumber: true })}
-              defaultValue={shoppingLists[0]?.id ?? ''}
-            >
+            <Form.Select {...register('shoppingListId', { valueAsNumber: true })}>
               <option value="">Choose a list…</option>
               {shoppingLists.map((sl) => (
                 <option key={sl.id} value={sl.id}>
@@ -209,7 +234,7 @@ const AddToShoppingListModal = ({
         </Col>
       </Row>
 
-      <Row className="pt-3 mobile-grid">
+      <Row className="pt-3">
         <Col>
           <Button type="submit" className="btn-submit" disabled={isSubmitting}>
             {isSubmitting ? 'Adding…' : 'Submit'}
@@ -218,9 +243,19 @@ const AddToShoppingListModal = ({
         <Col>
           <Button
             type="button"
-            onClick={() => reset({ name: prefillName, proteinGrams:0 })}
+            onClick={() =>
+              reset({
+                name: prefillName,
+                quantityValue: 0,
+                quantityUnit: null,
+                customQuantityUnit: '',
+                price: 0,
+                proteinGrams: 0,
+                shoppingListId: shoppingLists[0]?.id ?? 0,
+              })
+            }
             variant="warning"
-            className="btn-reset mobile-card"
+            className="btn-reset"
           >
             Reset
           </Button>
