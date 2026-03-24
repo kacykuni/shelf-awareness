@@ -49,8 +49,9 @@ export default function ProduceCard({ produce }: Props) {
             {produce.storage?.name || 'Not Available'} at {produce.location?.name || 'Not Available'}
           </ListGroup.Item>
           <ListGroup.Item>
-            <strong>Quantity:</strong> {typeof produce.quantity === 'number' ? produce.quantity : 'Not Available'}
-            {produce.unit ? ` ${produce.unit}` : ''}
+            <strong>Quantity:</strong> 
+            {typeof produce.quantityValue === 'number' ? produce.quantityValue : 'Not Available'}
+            {produce.quantityUnit ? ` ${produce.quantityUnit}` : ''}
           </ListGroup.Item>
           <ListGroup.Item>
             <strong>Expiration:</strong> {formatDate(produce.expiration)}
