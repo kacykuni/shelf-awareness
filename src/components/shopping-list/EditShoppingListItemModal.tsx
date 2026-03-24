@@ -2,12 +2,13 @@
 
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 import { useState } from 'react';
+import { QuantityUnit } from '@prisma/client';
 
 type SavedItem = {
   id: number;
   name: string;
-  quantity: number;
-  unit?: string | null;
+  quantityValue: number;
+  quantityUnit?: QuantityUnit | null;
   price?: number | null;
   proteinGrams?: number | null;
   restockTrigger?: string | null;
@@ -29,14 +30,14 @@ export default function EditShoppingListItemModal({
 }: EditModalProps) {
   const [form, setForm] = useState({
     name: item.name,
-    quantity: item.quantity,
-    unit: item.unit ?? '',
+    quantity: item.quantityValue.toString(),
+    quantityUnit: item.quantityUnit ?? '',
     price: item.price ?? '',
     proteinGrams: item.proteinGrams ?? '',
     restockTrigger: item.restockTrigger ?? 'empty',
     customThreshold: item.customThreshold ?? '',
   });
-
+  
   const handleChange = (e: React.ChangeEvent<any>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -46,8 +47,8 @@ export default function EditShoppingListItemModal({
     const updated: SavedItem = {
       id: item.id,
       name: form.name,
-      quantity: Number(form.quantity),
-      unit: form.unit || null,
+      quantityValue: Number(form.quantity),
+      quantityUnit: (form.quantityUnit as QuantityUnit) || null,
       price: form.price ? Number(form.price) : null,
       proteinGrams: form.proteinGrams ? Number(form.proteinGrams) : null,
       restockTrigger: form.restockTrigger || null,
@@ -84,8 +85,15 @@ export default function EditShoppingListItemModal({
               <Form.Control name="quantity" type="number" value={form.quantity} onChange={handleChange} />
             </Col>
             <Col xs={12} md={6}>
-              <Form.Label>Unit</Form.Label>
-              <Form.Control name="unit" value={form.unit} onChange={handleChange} />
+              <Form.Select name="quantityUnit" value={form.quantityUnit } onChange={handleChange}>
+                <option value="">No unit</option>
+                <option value="G">Grams</option>
+                <option value="OZ">Ounces</option>
+                <option value="LB">Pounds</option>
+                <option value="ML">Milliliters</option>
+                <option value="CUP">Cups</option>
+                <option value="ITEM">Item</option>
+              </Form.Select>
             </Col>
           </Row>
 

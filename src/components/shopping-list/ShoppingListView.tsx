@@ -84,7 +84,7 @@ export default function ShoppingListView({ initialShoppingLists }: ShoppingListV
   const getListValue = (list: ShoppingListWithProtein, key: SortKey) => {
     if (key === 'totalItems') return list.items.length;
     if (key === 'totalCost') return list.items.reduce(
-      (sum, item) => sum + (item.price ? Number(item.price) : 0) * item.quantity, 0,
+      (sum, item) => sum + (item.price ? Number(item.price) : 0) * item.quantityValue, 0,
     );
     if (key === 'totalProtein') return list.totalProtein;
     return 0;

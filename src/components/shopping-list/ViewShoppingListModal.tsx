@@ -13,7 +13,16 @@ import { FaPencilAlt, FaTrash } from 'react-icons/fa';
 import { ShoppingListWithProtein } from '../../types/shoppingList';
 import { useSession } from 'next-auth/react';
 import swal from 'sweetalert';
+import { QuantityUnit } from '@prisma/client';
 
+type AddItemValues = {
+  name: string;
+  quantityValue: number;
+  quantityUnit?: QuantityUnit | null;
+  shoppingListId: number;
+  price?: number;
+  proteinGrams?: number;
+};
 // interface ShoppingListItem {
 //   id: number;
 //   name: string;
@@ -246,8 +255,8 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList, onItemsChange }: Vi
                           />
                         </td>
                         <td>{item.name}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.unit || '-'}</td>
+                        <td>{item.quantityValue}</td>
+                        <td>{item.quantityUnit || '-'}</td>
                         <td>{item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'}</td>
                         <td>{item.proteinGrams ? `${Number(item.proteinGrams).toFixed(1)}g` : 'N/A'}</td>
                         <td>
@@ -331,8 +340,16 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList, onItemsChange }: Vi
           const exists = prev.find((i) => i.id === newItem.id);
           if (exists) {
             // upsert incremented quantity — update in place
-            return prev.map((i) => (i.id === newItem.id ? { ...i, quantity: newItem.quantity } : i));
-          }
+          return prev.map((i) =>
+            i.id === newItem.id
+            ? {
+              ...i,
+              quantityValue: newItem.quantityValue,
+              quantityUnit: newItem.quantityUnit,
+            }
+            : i
+          );
+        }
           return [...prev, newItem];
         })}
       />
