@@ -187,7 +187,7 @@ export default function RecipeCard({
                     let convertedUnit = 0;
                     for (let p of pantryItems){
                       if (hasItem && p.name.toLowerCase() === item.name.toLowerCase()){
-                        convertedUnit += convertUnits(p.quantity, p.unit, item.unit);
+                        convertedUnit += convertUnits(p.quantityValue, p.quantityUnit, item.unit);
                          
                       }
                     }

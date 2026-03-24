@@ -1,3 +1,4 @@
+import { QuantityUnit } from '@prisma/client';
 import * as Yup from 'yup';
 
 export const AddProduceSchema = Yup.object({
@@ -5,8 +6,8 @@ export const AddProduceSchema = Yup.object({
   type: Yup.string().required(),
   location: Yup.string().required(),
   storage: Yup.string().required(),
-  quantity: Yup.number().positive().required(),
-  unit: Yup.string().required(),
+  quantityValue: Yup.number().positive().required(),
+  quantityUnit: Yup.string().required(),
   expiration: Yup.date()
     .nullable()
     .transform((curr: Date | null, orig: string) => (orig === '' ? null : curr))
@@ -26,8 +27,8 @@ export const EditProduceSchema = Yup.object({
   type: Yup.string().required(),
   location: Yup.string().required(),
   storage: Yup.string().required(),
-  quantity: Yup.number().positive().required(),
-  unit: Yup.string().required(),
+  quantityValue: Yup.number().positive().required(),
+  quantityUnit: Yup.string().required(),
   expiration: Yup.date()
     .nullable()
     .transform((curr: Date | null, orig: string) => (orig === '' ? null : curr))
@@ -62,11 +63,14 @@ export const EditShoppingListSchema = Yup.object({
 
 export const AddShoppingListItemSchema = Yup.object({
   name: Yup.string().required('Item name is required'),
-  quantity: Yup.number()
+  quantityValue: Yup.number()
     .typeError('Quantity must be a number')
     .positive('Must be greater than 0')
     .required('Quantity is required'),
-  unit: Yup.string().optional(),
+  quantityUnit: Yup
+  .mixed<QuantityUnit>()
+  .oneOf(Object.values(QuantityUnit))
+  .nullable(),
   price: Yup.number()
     .typeError('Price must be a number')
     .optional()
@@ -83,8 +87,8 @@ export const AddShoppingListItemSchema = Yup.object({
 export const EditShoppingListItemSchema = Yup.object({
   id: Yup.number().required('ID is required'),
   name: Yup.string().required('Item name is required'),
-  quantity: Yup.number().positive('Quantity must be positive').required('Quantity is required'),
-  unit: Yup.string().nullable().notRequired(),
+  quantityValue: Yup.number().positive('Quantity must be positive').required('Quantity is required'),
+  quantityUnit: Yup.string().nullable().notRequired(),
   price: Yup.number()
     .nullable()
     .transform((curr, orig) => (orig === '' ? null : curr))
