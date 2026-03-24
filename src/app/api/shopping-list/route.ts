@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { QuantityUnit } from '@prisma/client';
 
+const validUnit = Object.values(QuantityUnit)
+  ? QuantityUnit
+  : null;
 export async function POST(req: Request) {
   try {
-    const { name, quantity, unit, owner } = await req.json();
+    const { name, quantityValue, quantityUnit, owner } = await req.json();
 
     if (!name || !owner) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -41,11 +45,11 @@ export async function POST(req: Request) {
       data: {
         shoppingListId: shoppingList.id,
         name,
-        quantity: Number(quantity) || 1,
-        unit: unit || '',
+        quantityValue: Number(quantityValue) || 1,
+        quantityUnit: validUnit,
         price: null,
-      },
-    });
+        proteinGrams: null,},
+      });
 
     return NextResponse.json(item);
   } catch (err) {

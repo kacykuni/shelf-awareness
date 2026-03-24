@@ -18,10 +18,10 @@ type SL = Pick<ShoppingListWithProtein, 'id' | 'name'>;
 
 type AddItemValues = {
   name: string;
-  quantity: number;
+  quantityValue: number;
   shoppingListId: number;
   price?: number;
-  unit?: string;
+  quantityUnit?: string;
   proteinGrams?: number;
 };
 
@@ -55,8 +55,8 @@ const AddToShoppingListModal = ({
     resolver: yupResolver(AddShoppingListItemSchema),
     defaultValues: {
       name: prefillName,
-      quantity: 0,
-      unit: '',
+      quantityValue: 0,
+      quantityUnit: '',
       price: 0,
       proteinGrams: 0,
       shoppingListId: shoppingLists[0]?.id ?? 0,
@@ -67,8 +67,8 @@ const AddToShoppingListModal = ({
     if (!show)
       reset({
         name: prefillName,
-        quantity: 0,
-        unit: '',
+        quantityValue: 0,
+        quantityUnit: '',
         price: 0,
         proteinGrams: 0,
       });
@@ -78,8 +78,8 @@ const AddToShoppingListModal = ({
     if (!show)
       reset({
         name: prefillName,
-        quantity: 0,
-        unit: '',
+        quantityValue: 0,
+        quantityUnit: '',
         price: 0,
         proteinGrams: 0,
       });
@@ -103,8 +103,8 @@ const AddToShoppingListModal = ({
 
       const newItem = await addShoppingListItem({
         name: data.name.trim(),
-        quantity: Number(data.quantity),
-        unit: data.unit?.trim() || '',
+        quantity: Number(data.quantityValue),
+        unit: data.quantityUnit?.trim() || '',
         price,
         proteinGrams,
         shoppingListId: Number(data.shoppingListId),
@@ -142,17 +142,17 @@ const AddToShoppingListModal = ({
             <Form.Control
               type="number"
               min={1}
-              {...register('quantity')}
-              className={`${errors.quantity ? 'is-invalid' : ''}`}
+              {...register('quantityValue', { valueAsNumber: true })}
+              className={`${errors.quantityValue ? 'is-invalid' : ''}`}
             />
-            <div className="invalid-feedback">{errors.quantity?.message}</div>
+            <div className="invalid-feedback">{errors.quantityValue?.message}</div>
           </Form.Group>
         </Col>
 
         <Col xs={6} sm={3}>
           <Form.Group>
             <Form.Label>Unit</Form.Label>
-            <Form.Control type="text" {...register('unit')} />
+            <Form.Control type="text" {...register('quantityUnit')} />
           </Form.Group>
         </Col>
       </Row>
