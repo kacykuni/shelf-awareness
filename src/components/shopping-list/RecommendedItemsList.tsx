@@ -39,7 +39,7 @@ export default function RecommendedItemsList({ items, onAdd }: RecommendedItemsL
           <small>
             Qty:
             {' '}
-            {item.quantity}
+            {item.quantityValue}
             {' '}
             • Exp:
             {' '}

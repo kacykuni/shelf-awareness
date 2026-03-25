@@ -38,10 +38,10 @@ function sortProduce(arr: ProduceRelations[], sort: string): ProduceRelations[] 
       sorted.sort((a, b) => toTime(a.expiration) - toTime(b.expiration));
       break;
     case 'qty-desc':
-      sorted.sort((a, b) => (b.quantity ?? 0) - (a.quantity ?? 0));
+      sorted.sort((a, b) => (b.quantityValue ?? 0) - (a.quantityValue ?? 0));
       break;
     case 'qty-asc':
-      sorted.sort((a, b) => (a.quantity ?? 0) - (b.quantity ?? 0));
+      sorted.sort((a, b) => (a.quantityValue ?? 0) - (b.quantityValue ?? 0));
       break;
     default:
       break;

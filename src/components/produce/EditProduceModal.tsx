@@ -20,14 +20,15 @@ import { useRouter } from 'next/navigation';
 import ImagePickerModal from '@/components/images/ImagePickerModal';
 import '../../styles/buttons.css';
 import { ProduceRelations } from '@/types/ProduceRelations';
+import { QuantityUnit } from '@prisma/client';
 
 function mapProduceToFormValues(produce: ProduceRelations) {
   return {
     id: produce.id,
     name: produce.name,
     type: produce.type,
-    quantity: produce.quantity,
-    unit: produce.unit,
+    quantity: produce.quantityValue,
+    unit: produce.quantityUnit,
     owner: produce.owner,
     image: produce.image ?? '',
     restockThreshold: produce.restockThreshold ?? null,
@@ -70,7 +71,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
   );
 
   const [unitChoice, setUnitChoice] = useState(
-    unitOptions.includes(produce.unit) ? produce.unit : 'Other',
+    unitOptions.includes(produce.quantityUnit) ? produce.quantityUnit : 'Other',
   );
 
   // Image picker modal state
@@ -120,7 +121,7 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
       setSelectedLocation(produce.location?.name || '');
       setSelectedStorage(produce.storage?.name || '');
 
-      setUnitChoice(unitOptions.includes(produce.unit) ? produce.unit : 'Other');
+      setUnitChoice(unitOptions.includes(produce.quantityUnit) ? produce.quantityUnit : 'Other');
 
       // Always fetch available locations
       const fetchLocations = async () => {
@@ -145,25 +146,60 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
     reset();
     onHide();
   };
+  
 
-  const onSubmit = async (data: ProduceValues) => {
-    try {
-      await editProduce({
-        ...data,
-        expiration: data.expiration ? new Date(data.expiration) : null,
-        image: data.image === '' ? null : data.image,
-        restockThreshold: data.restockThreshold
-          ? Number(data.restockThreshold)
-          : 0,
-      });
-      swal('Success', 'Your item has been updated', 'success', { timer: 2000 });
-      handleClose();
-      router.refresh();
-    } catch (err) {
-      swal('Error', 'Failed to update item', 'error');
-    }
-  };
+const onSubmit = async (data: ProduceValues) => {
+  try {
+    // Determine the unit: either a valid QuantityUnit enum or null
+    const unit: QuantityUnit | null =
+      unitOptions.includes(unitChoice) && unitChoice !== 'Other'
+        ? (unitChoice as QuantityUnit)
+        : null;
 
+    // Optional: store free-text units separately
+    const customUnit: string | null =
+      unitChoice === 'Other' && data.quantityUnit
+        ? data.quantityUnit
+        : null;
+
+    // Construct payload with proper types
+    const payload: {
+      id: number;
+      name: string;
+      type: string;
+      quantity: number;
+      unit: QuantityUnit | null;
+      customUnit?: string | null;
+      expiration: Date | null;
+      image: string | null;
+      restockThreshold: number;
+      location: string;
+      storage: string;
+      owner: string;
+    } = {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      quantity: Number(data.quantityValue),
+      unit,
+      customUnit,
+      expiration: data.expiration ? new Date(data.expiration) : null,
+      image: data.image ? (data.image.trim() === '' ? null : data.image.trim()) : null,
+      restockThreshold: data.restockThreshold ? Number(data.restockThreshold) : 0,
+      location: selectedLocation,
+      storage: selectedStorage,
+      owner: produce.owner,
+    };
+
+    await editProduce(payload);
+
+    swal('Success', 'Your item has been updated', 'success', { timer: 2000 });
+    handleClose();
+    router.refresh();
+  } catch (err) {
+    swal('Error', 'Failed to update item', 'error');
+  }
+};
   return (
     <Modal show={show} onHide={onHide} centered>
       <Modal.Header className="justify-content-center">
@@ -311,12 +347,12 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
                 <Form.Control
                   type="number"
                   step={0.5}
-                  {...register('quantity')}
+                  {...register('quantityValue', { valueAsNumber: true })}
                   placeholder="e.g., 1, 1.5"
-                  isInvalid={!!errors.quantity}
+                  isInvalid={!!errors.quantityValue}
                 />
                 <Form.Control.Feedback type="invalid">
-                  {errors.quantity?.message}
+                  {errors.quantityValue?.message}
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>
@@ -328,9 +364,9 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
                   onChange={(e) => {
                     const { value } = e.target;
                     setUnitChoice(value);
-                    setValue('unit', value !== 'Other' ? value : '');
+                    setValue('quantityUnit', unitChoice !== 'Other' ? unitChoice : '');
                   }}
-                  isInvalid={!!errors.unit}
+                  isInvalid={!!errors.quantityUnit}
                 >
                   {unitOptions.map((u) => (
                     <option key={u}>{u}</option>
@@ -340,15 +376,15 @@ export default function EditProduceModal({ show, onHide, produce }: EditProduceM
                 {unitChoice === 'Other' && (
                   <Form.Control
                     type="text"
-                    {...register('unit')}
+                    {...register('quantityUnit')}
                     placeholder="Enter custom unit"
                     required
                     className="mt-2"
-                    isInvalid={!!errors.unit}
+                    isInvalid={!!errors.quantityUnit}
                   />
                 )}
                 <Form.Control.Feedback type="invalid">
-                  {errors.unit?.message}
+                  {errors.quantityUnit?.message}
                 </Form.Control.Feedback>
               </Form.Group>
             </Col>

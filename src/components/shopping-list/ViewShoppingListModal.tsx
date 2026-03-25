@@ -12,7 +12,17 @@ import EditShoppingListItemModal from './EditShoppingListItemModal';
 import { FaPencilAlt, FaTrash } from 'react-icons/fa';
 import { ShoppingListWithProtein } from '../../types/shoppingList';
 import { useSession } from 'next-auth/react';
+import swal from 'sweetalert';
+import { QuantityUnit } from '@prisma/client';
 
+type AddItemValues = {
+  name: string;
+  quantityValue: number;
+  quantityUnit?: QuantityUnit | null;
+  shoppingListId: number;
+  price?: number;
+  proteinGrams?: number;
+};
 // interface ShoppingListItem {
 //   id: number;
 //   name: string;
@@ -38,10 +48,11 @@ import { useSession } from 'next-auth/react';
 interface ViewShoppingListModalProps {
   show: boolean;
   onHide: () => void;
-  shoppingList?: ShoppingListWithProtein; // optional for safety
+  shoppingList?: ShoppingListWithProtein;
+  onItemsChange?: (items: ShoppingListWithProtein['items']) => void;
 }
 
-const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListModalProps) => {
+const ViewShoppingListModal = ({ show, onHide, shoppingList, onItemsChange }: ViewShoppingListModalProps) => {
   // const [items, setItems] = useState<ShoppingListItem[]>([]);
   const [items, setItems] = useState<ShoppingListWithProtein['items']>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -58,6 +69,15 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
   const [storages, setStorages] = useState<string[]>([]);
   const [selectedStorage, setSelectedStorage] = useState('');
 
+  // Update items locally and notify parent card so totals update in real time
+  const updateItems = (updater: (prev: ShoppingListWithProtein['items']) => ShoppingListWithProtein['items']) => {
+    setItems((prev) => {
+      const next = updater(prev);
+      setTimeout(() => onItemsChange?.(next), 0);
+      return next;
+    });
+  };
+
   // Update items when the shopping list changes
   useEffect(() => {
     if (!shoppingList) return;
@@ -69,7 +89,7 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
   }, [shoppingList]);
 
   const handleRestockChange = async (itemId: number, restockTrigger: string) => {
-    setItems((prev) =>
+    updateItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, restockTrigger } : item)),
     );
 
@@ -81,7 +101,7 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
   };
 
   const handleThresholdChange = async (itemId: number, customThreshold: number) => {
-    setItems((prev) =>
+    updateItems((prev) =>
       prev.map((item) => (item.id === itemId ? { ...item, customThreshold } : item)),
     );
 
@@ -96,7 +116,7 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
     try {
       setDeletingItemId(itemId);
       await fetch(`/api/shopping-list-item/${itemId}`, { method: 'DELETE' });
-      setItems((prev) => prev.filter((i) => i.id !== itemId));
+      updateItems((prev) => prev.filter((i) => i.id !== itemId));
     } catch (err) {
       console.error('Failed to delete item:', err);
     } finally {
@@ -166,12 +186,14 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
       });
     }
 
-    setItems((prev) => prev.filter((item) => !checkedState[item.id]));
+    updateItems((prev) => prev.filter((item) => !checkedState[item.id]));
     setCheckedState({});
     setShowLocationModal(false);
     if (shoppingList) {
       localStorage.removeItem(`checkboxes-${shoppingList.id}`);
     }
+    swal('Success', `${checkedIds.length} item${checkedIds.length !== 1 ? 's' : ''} 
+      moved to your pantry!`, 'success', { timer: 2000 });
   };
 
   const handleLocationChange = async (locationName: string) => {
@@ -233,8 +255,8 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
                           />
                         </td>
                         <td>{item.name}</td>
-                        <td>{item.quantity}</td>
-                        <td>{item.unit || '-'}</td>
+                        <td>{item.quantityValue}</td>
+                        <td>{item.quantityUnit || '-'}</td>
                         <td>{item.price ? `$${Number(item.price).toFixed(2)}` : 'N/A'}</td>
                         <td>{item.proteinGrams ? `${Number(item.proteinGrams).toFixed(1)}g` : 'N/A'}</td>
                         <td>
@@ -314,6 +336,22 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
         shoppingLists={[shoppingList]}
         sidePanel={false}
         prefillName=""
+        onItemAdded={(newItem) => updateItems((prev) => {
+          const exists = prev.find((i) => i.id === newItem.id);
+          if (exists) {
+            // upsert incremented quantity — update in place
+          return prev.map((i) =>
+            i.id === newItem.id
+            ? {
+              ...i,
+              quantityValue: newItem.quantityValue,
+              quantityUnit: newItem.quantityUnit,
+            }
+            : i
+          );
+        }
+          return [...prev, newItem];
+        })}
       />
       {editingItem && (
       <EditShoppingListItemModal
@@ -322,6 +360,16 @@ const ViewShoppingListModal = ({ show, onHide, shoppingList }: ViewShoppingListM
         item={{
           ...editingItem,
           price: editingItem.price ? Number(editingItem.price.toString()) : null,
+        }}
+        onItemSaved={(updated) => {
+          updateItems((prev) =>
+            prev.map((i) =>
+              i.id === updated.id
+                ? { ...i, ...updated, price: updated.price as any }
+                : i,
+            ),
+          );
+          setEditingItem(null);
         }}
       />
       )}

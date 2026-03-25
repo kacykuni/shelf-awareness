@@ -13,8 +13,8 @@ type SessionLike = {
 export type IngredientItemInput = {
   name: string;
   substitutes?: string[];
-  quantity?: number | null;
-  unit?: string | null;
+  quantityValue?: number | null;
+  quantityUnit?: string | null;
   order?: number | null;
 };
 
@@ -51,11 +51,11 @@ function normalizeIngredientItems(
   return rawItems
     .map((item, index) => {
       const name = item.name.trim();
-      const unit = item.unit?.trim() || null;
+      const unit = item.quantityUnit?.trim() || null;
 
       let quantity: number | null = null;
-      if (typeof item.quantity === 'number' && !Number.isNaN(item.quantity)) {
-        quantity = item.quantity;
+      if (typeof item.quantityValue === 'number' && !Number.isNaN(item.quantityValue)) {
+        quantity = item.quantityValue;
       }
 
       const rawSubs = (item as any).substitutes;
@@ -170,8 +170,8 @@ const recipe = await prisma.recipe.create({
             substitutes: Array.isArray(item.substitutes)
          ? (item.substitutes.join('|') || null)
          : (item.substitutes ?? null),
-            quantity: item.quantity ?? null,
-            unit: item.unit ?? null,
+            quantity: item.quantityValue ?? null,
+            unit: item.quantityUnit ?? null,
             order: item.order ?? 0,
           })),
           }
@@ -257,8 +257,8 @@ export async function updateRecipe(id: number, input: RecipeInput) {
           substitutes: Array.isArray(item.substitutes)
         ? (item.substitutes.join('|') || null)
         : (item.substitutes ?? null),
-          quantity: item.quantity ?? null,
-          unit: item.unit ?? null,
+          quantity: item.quantityValue ?? null,
+          unit: item.quantityUnit ?? null,
           order: item.order ?? 0,
         })),
       },

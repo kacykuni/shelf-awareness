@@ -49,8 +49,8 @@ export async function DELETE(
     await prisma.produce.create({
       data: {
         name: item.name,
-        quantity: item.quantity,
-        unit: item.unit || '',
+        quantityValue: item.quantityValue,
+        quantityUnit: item.quantityUnit || '',
         type: 'Other',
         owner: owner,
         locationId: location.id,
@@ -82,8 +82,8 @@ export async function PUT(
       where: { id },
       data: {
         name: body.name,
-        quantity: body.quantity,
-        unit: body.unit || null,
+        quantityValue: body.quantityValue,
+        quantityUnit: body.quantityUnit || null,
         price: body.price ?? null,
         proteinGrams: body.proteinGrams ?? null,
         restockTrigger: body.restockTrigger ?? null,
