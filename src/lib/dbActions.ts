@@ -180,7 +180,7 @@ export async function editProduce(
       expiration = produce.expiration as Prisma.DateTimeFieldUpdateOperationsInput;
     }
   }
-
+ 
   // Update produce linking new IDs
   const updatedProduce = await prisma.produce.update({
     where: { id: produce.id },
@@ -241,13 +241,21 @@ export async function deleteProduce(id: number) {
 }
 
 export async function getUserProduceByEmail(owner: string) {
-  return prisma.produce.findMany({
+  const items = await prisma.produce.findMany({
     where: { owner },
-    select: { name: true,
-              unit: true,
-              quantity: true,
-     },
+    select: { 
+      name: true,
+      quantityValue: true,
+      quantityUnit: true,
+    },
   });
+
+  // Map DB → frontend format
+  return items.map((item) => ({
+    name: item.name,
+    quantity: item.quantityValue,
+    unit: item.quantityUnit,
+  }));
 }
 
 /**

@@ -28,11 +28,11 @@ export async function getRecommendedProduce(
       owner: email,
       name: { notIn: excludedNames },
       OR: [
-        { quantity: { lte: lowStock } },
+        { quantityValue: { lte: lowStock } },
         { expiration: { lte: soon } },
       ],
     },
-    orderBy: { quantity: 'asc' },
+    orderBy: { quantityValue: 'asc' },
   });
 
   return produce;
