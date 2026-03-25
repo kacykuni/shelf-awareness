@@ -55,7 +55,7 @@ const ViewShoppingListPage = async () => {
 
   return (
     <main>
-      <Container id="view-shopping-list" className="py-3">
+      <Container id="view-shopping-list" className="px-2 px-md-3 py-1 py-md-3">
         <ShoppingListClient initialShoppingLists={shoppingListsWithProtein} />
       </Container>
     </main>

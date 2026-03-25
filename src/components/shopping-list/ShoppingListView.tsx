@@ -303,9 +303,9 @@ export default function ShoppingListView({ initialShoppingLists }: ShoppingListV
               </Col>
             </Row>
           ) : (
-            <Row>
+            <Row className="g-2 g-md-3">
               {filteredLists.map((list) => (
-                <Col key={list.id} md={6} className="mb-4">
+                <Col key={list.id} md={6} className="mb-2 mb-md-4">
                   <ShoppingListCard shoppingList={list} onListDeleted={handleListDeleted} />
                 </Col>
               ))}
