@@ -128,23 +128,23 @@ export default function ShoppingListCard({ shoppingList, onListDeleted }: Shoppi
 
       <Card.Body className="bg-light">
         <ListGroup variant="flush">
-          <ListGroup.Item className="bg-light">
+          <ListGroup.Item className="bg-light py-1 py-md-2">
             <strong>Date Created:</strong>
             {' '}
             {formatDate(shoppingList.createdAt)}
           </ListGroup.Item>
-          <ListGroup.Item className="bg-light">
+          <ListGroup.Item className="bg-light py-1 py-md-2">
             <strong>Total Items:</strong>
             {' '}
             <Badge bg="primary">{totalItems}</Badge>
           </ListGroup.Item>
-          <ListGroup.Item className="bg-light">
+          <ListGroup.Item className="bg-light py-1 py-md-2">
             <strong>Estimated Cost:</strong>
             {' '}
             $
             {totalCost.toFixed(2)}
           </ListGroup.Item>
-          <ListGroup.Item className="bg-light">
+          <ListGroup.Item className="bg-light py-1 py-md-2">
             <strong>Total Protein:</strong>{' '}
             {totalProtein.toFixed(1)} g
           </ListGroup.Item>
